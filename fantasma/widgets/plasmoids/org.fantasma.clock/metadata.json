@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "Xio" }],
+        "Category": "Date and Time",
+        "Description": "Giant clock — 幻 Fantasma",
+        "Icon": "clock",
+        "Id": "org.fantasma.clock",
+        "License": "MIT",
+        "Name": "幻 Clock",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

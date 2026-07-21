@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 3840 2160">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#121019"/>
+      <stop offset="0.55" stop-color="#181322"/>
+      <stop offset="1" stop-color="#20182a"/>
+    </linearGradient>
+    <linearGradient id="kanji" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff7fb8"/>
+      <stop offset="1" stop-color="#c88ff0"/>
+    </linearGradient>
+    <linearGradient id="accentline" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff7fb8"/>
+      <stop offset="1" stop-color="#c88ff0"/>
+    </linearGradient>
+    <pattern id="grid" width="120" height="120" patternUnits="userSpaceOnUse">
+      <path d="M120 0 L0 0 0 120" fill="none" stroke="#c88ff0" stroke-width="1" opacity="0.05"/>
+    </pattern>
+    <pattern id="hazard" width="56" height="56" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="28" height="56" fill="#eacb52"/>
+      <rect x="28" width="28" height="56" fill="#20182a"/>
+    </pattern>
+  </defs>
+
+  <rect width="3840" height="2160" fill="url(#bg)"/>
+  <rect width="3840" height="2160" fill="url(#grid)"/>
+  <ellipse cx="1920" cy="600" rx="2200" ry="1200" fill="#c88ff0" opacity="0.04"/>
+  <text x="1920" y="1430" font-family="Noto Sans CJK JP, Noto Sans JP, sans-serif"
+        font-weight="900" font-size="1000" text-anchor="middle"
+        fill="url(#kanji)" opacity="0.92">幻</text>
+</svg>

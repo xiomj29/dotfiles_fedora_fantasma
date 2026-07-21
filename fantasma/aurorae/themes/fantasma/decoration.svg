@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" version="1.1">
+  <!-- 幻 Fantasma Aurorae — titlebar plum oscuro translúcido (blur), suave,
+       sin bordes ni sombra (todo transparente menos el center). -->
+
+  <!-- SIN sombra (todo transparente; padding rc = 0) -->
+  <g fill="#000000" fill-opacity="0" stroke="none">
+    <rect id="shadow-topleft"     x="0"  y="90" width="1" height="1"/>
+    <rect id="shadow-top"         x="4"  y="90" width="8" height="1"/>
+    <rect id="shadow-topright"    x="16" y="90" width="1" height="1"/>
+    <rect id="shadow-left"        x="0"  y="94" width="1" height="8"/>
+    <rect id="shadow-right"       x="16" y="94" width="1" height="8"/>
+    <rect id="shadow-bottomleft"  x="0"  y="106" width="1" height="1"/>
+    <rect id="shadow-bottom"      x="4"  y="106" width="8" height="1"/>
+    <rect id="shadow-bottomright" x="16" y="106" width="1" height="1"/>
+  </g>
+
+  <!-- Bordes/esquinas: transparentes (sin marco) -->
+  <rect id="decoration-topleft"     x="0"  y="0"  width="1"  height="1"  fill="#000000" fill-opacity="0"/>
+  <rect id="decoration-top"         x="4"  y="0"  width="40" height="1"  fill="#000000" fill-opacity="0"/>
+  <rect id="decoration-topright"    x="50" y="0"  width="1"  height="1"  fill="#000000" fill-opacity="0"/>
+  <rect id="decoration-left"        x="0"  y="6"  width="1"  height="40" fill="#000000" fill-opacity="0"/>
+  <!-- TITLEBAR: plum oscuro translúcido (blur lo suaviza) -->
+  <rect id="decoration-center"      x="4"  y="6"  width="40" height="40" fill="#282034" fill-opacity="0.72"/>
+  <rect id="decoration-right"       x="50" y="6"  width="1"  height="40" fill="#000000" fill-opacity="0"/>
+  <rect id="decoration-bottomleft"  x="0"  y="50" width="1"  height="1"  fill="#000000" fill-opacity="0"/>
+  <rect id="decoration-bottom"      x="4"  y="50" width="40" height="1"  fill="#000000" fill-opacity="0"/>
+  <rect id="decoration-bottomright" x="50" y="50" width="1"  height="1"  fill="#000000" fill-opacity="0"/>
+</svg>

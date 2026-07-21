@@ -1,0 +1,105 @@
+echo -e "\e[1;32m  Ciao Xishay!\e[0m"
+echo ""
+
+# fi
+
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME=""   # 幻 Fantasma: sin tema de omz; el prompt lo da starship
+
+plugins=(git zsh-autosuggestions zsh-syntax-highlighting zsh-history-substring-search sudo)
+
+source $ZSH/oh-my-zsh.sh
+
+# --- PATH ---
+export PATH="$HOME/.local/bin:$PATH"
+
+# --- Variables ---
+export EDITOR="nvim"
+export MAKEFLAGS="-j$(nproc)"
+export OBS_ESCOM="$HOME/Documents/Obsidian/ESCOM"
+export OBS_DEV="$HOME/Documents/Obsidian/Dev"
+
+# --- Historial ---
+HISTSIZE=50000
+SAVEHIST=50000
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE
+setopt SHARE_HISTORY
+
+# --- Aliases ---
+alias ls='ls --color=auto -h'
+alias ll='ls -alF --color=auto'
+alias grep='grep --color=auto'
+alias df='df -h'
+alias free='free -h'
+alias escom='cd $OBS_ESCOM'
+alias devnotes='cd $OBS_DEV'
+alias klog='dmesg -w --color=always | less -R'
+alias objd='objdump -d -M intel'
+alias hexd='hexdump -C'
+alias chat='ollama run llama3.2:3b'
+alias coder='ollama run deepseek-coder:6.7b'
+alias coder='ollama run qwen2.5-coder:7b'
+
+# --- Funciones ---
+function syscall() {
+    ollama run qwen2.5-coder:7b \
+        "Explica brevemente el syscall '$1' en Linux: propósito, firma, comportamiento interno. Responde en español, sé conciso."
+}
+function leetcode() {
+    ollama run deepseek-coder:6.7b \
+        "Problema: '$1'. Dame la intuición del approach sin código todavía."
+}
+function ksearch() {
+    grep -r --include="*.c" --include="*.h" -n "$1" "$HOME/linux" 2>/dev/null | head -20
+}
+
+# --- Keybindings ---
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
+
+eval "$(gh copilot alias -- zsh 2>/dev/null)"
+
+export PATH="$HOME/.local/bin:$PATH"
+alias packettracer="/opt/pt/packettracer.AppImage"
+
+alias ls='eza --icons'
+alias ll='eza -la --icons'
+alias lt='eza --tree --icons'
+alias cat='bat'
+alias grep='rg'
+
+# zoxide (cd inteligente)
+eval "$(zoxide init zsh)"
+alias docker='podman'
+alias docker-compose='podman-compose'
+
+# NVIDIA CUDA Toolkit
+export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+export CUDA_HOME=/usr/local/cuda
+source /etc/profile.d/modules.sh
+module load mpi/openmpi-x86_64
+
+# Added by Antigravity CLI installer
+export PATH="/home/xishay/.local/bin:$PATH"
+export DOTNET_ROOT="$HOME/.dotnet"
+export PATH="$PATH:$HOME/.dotnet:$HOME/.dotnet/tools"
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/home/xishay/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/home/xishay/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/home/xishay/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/home/xishay/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+
+# --- Flutter SDK ---
+export PATH="$HOME/development/flutter/bin:$PATH"
+export CHROME_EXECUTABLE="/usr/bin/chromium-browser"
+
+export PATH="$HOME/.local/bin:$PATH"
+export STARSHIP_CONFIG="$HOME/.config/starship.toml"
+command -v starship >/dev/null && eval "$(starship init zsh)"

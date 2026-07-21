@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Xio"
+            }
+        ],
+        "Description": "幻 Fantasma — tema global cyberpunk neo-Tokio (solo apariencia)",
+        "Id": "org.fantasma.desktop",
+        "Name": "幻 Fantasma",
+        "Version": "1.0"
+    }
+}

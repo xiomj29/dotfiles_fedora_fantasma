@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" version="1.1">
+  <g id="base"/>
+  <g id="active-center"      fill="none" stroke="#c9c0dc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5,11 L11.5,11"/></g>
+  <g id="inactive-center"    fill="none" stroke="#6f6488" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5,11 L11.5,11"/></g>
+  <g id="hover-center"       fill="none" stroke="#f0eafc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5,11 L11.5,11"/></g>
+  <g id="pressed-center"     fill="none" stroke="#b585de" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5,11 L11.5,11"/></g>
+  <g id="deactivated-center" fill="none" stroke="#4a4060" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5,11 L11.5,11"/></g>
+</svg>

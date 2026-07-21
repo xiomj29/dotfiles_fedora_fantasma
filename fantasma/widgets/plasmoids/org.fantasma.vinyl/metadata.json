@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "Xio" }],
+        "Category": "Multimedia",
+        "Description": "Music player with spinning vinyl record — 幻 Fantasma",
+        "Icon": "media-optical-audio",
+        "Id": "org.fantasma.vinyl",
+        "License": "MIT",
+        "Name": "幻 Vinyl",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Cisco Packet Tracer
+Comment=Network simulation tool
+Exec=/opt/pt/packettracer.AppImage --no-sandbox
+Icon=/home/xishay/.local/share/icons/packettracer.png
+Categories=Education;Network;
+Terminal=false

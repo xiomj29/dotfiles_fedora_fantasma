@@ -1,0 +1,24 @@
+# Configuración opcional de neko.
+# Cópialo a  ~/.config/neko.toml  y descomenta lo que quieras cambiar.
+# Si el archivo no existe, neko usa estos mismos valores por defecto.
+
+[ajustes]
+# cpu_alta        = 75    # % de CPU para ponerse 😠 (angry)
+# cpu_tope        = 80    # % de CPU para el comentario "a tope"
+# temp_alta       = 75    # °C para ponerse 🥵 (hot)
+# temp_critica    = 85    # °C → nube de alerta roja e insistente
+# bateria_baja    = 20    # % para ponerse 😟 (worried) y avisar
+# bateria_critica = 10    # % → nube de alerta roja e insistente
+# nube_cada       = 14    # segundos entre comentarios
+# nube_dura       = 5     # segundos que dura cada comentario
+# dormir_tras     = 40    # segundos de CPU baja antes de dormirse 😴
+# cpu_dormir      = 8     # % de CPU por debajo del cual cuenta como inactividad
+
+[colores]
+# Acepta hex "#rrggbb". Nombres disponibles:
+# gato   = "#f0ede8"   # color principal del pelaje
+# claro  = "#d4c9be"   # tono claro
+# sombra = "#b8a89a"   # sombra / cola
+# borde  = "#6b5c52"   # contorno
+# hocico = "#e8956d"   # hocico
+# nariz  = "#f0a0a0"   # nariz / orejas

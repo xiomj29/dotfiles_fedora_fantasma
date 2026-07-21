@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 3840 2160">
+  <defs>
+    <linearGradient id="bg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="3840" y2="2160">
+      <stop offset="0" stop-color="#131019"/>
+      <stop offset="0.55" stop-color="#181322"/>
+      <stop offset="1" stop-color="#1d1628"/>
+    </linearGradient>
+    <radialGradient id="haze1" gradientUnits="userSpaceOnUse" cx="1920" cy="1020" r="1500">
+      <stop offset="0" stop-color="#c88ff0" stop-opacity="0.07"/>
+      <stop offset="0.6" stop-color="#c88ff0" stop-opacity="0.03"/>
+      <stop offset="1" stop-color="#c88ff0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="haze2" gradientUnits="userSpaceOnUse" cx="1920" cy="1020" r="850">
+      <stop offset="0" stop-color="#ff7fb8" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#ff7fb8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="kanji" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff7fb8"/>
+      <stop offset="1" stop-color="#c88ff0"/>
+    </linearGradient>
+    <clipPath id="band1"><rect x="0" y="880"  width="3840" height="118"/></clipPath>
+    <clipPath id="band2"><rect x="0" y="1218" width="3840" height="86"/></clipPath>
+    <clipPath id="band3"><rect x="0" y="1368" width="3840" height="54"/></clipPath>
+    <clipPath id="band4"><rect x="0" y="660"  width="3840" height="42"/></clipPath>
+    <pattern id="scan" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect x="0" y="5" width="8" height="2.5" fill="#000000" opacity="0.09"/>
+    </pattern>
+  </defs>
+  <rect width="3840" height="2160" fill="url(#bg)"/>
+  <rect width="3840" height="2160" fill="url(#haze1)"/>
+  <rect width="3840" height="2160" fill="url(#haze2)"/>
+  <g font-family="Noto Sans CJK JP" font-weight="900" font-size="1000" text-anchor="middle">
+
+    <text x="1878" y="1430" fill="#3ad6e6" opacity="0.5">幻</text>
+    <text x="1962" y="1430" fill="#ff7fb8" opacity="0.5">幻</text>
+    <text x="1920" y="1430" fill="url(#kanji)" opacity="0.95">幻</text>
+    <g clip-path="url(#band1)">
+      <rect width="3840" height="2160" fill="url(#bg)"/>
+      <rect width="3840" height="2160" fill="url(#haze1)"/>
+      <rect width="3840" height="2160" fill="url(#haze2)"/>
+      <g transform="translate(150 0)">
+        <text x="1878" y="1430" fill="#3ad6e6" opacity="0.5">幻</text>
+        <text x="1962" y="1430" fill="#ff7fb8" opacity="0.5">幻</text>
+        <text x="1920" y="1430" fill="url(#kanji)" opacity="0.95">幻</text>
+      </g>
+    </g>
+
+    <g clip-path="url(#band2)">
+      <rect width="3840" height="2160" fill="url(#bg)"/>
+      <rect width="3840" height="2160" fill="url(#haze1)"/>
+      <rect width="3840" height="2160" fill="url(#haze2)"/>
+      <g transform="translate(-190 0)">
+        <text x="1878" y="1430" fill="#3ad6e6" opacity="0.55">幻</text>
+        <text x="1962" y="1430" fill="#ff7fb8" opacity="0.45">幻</text>
+        <text x="1920" y="1430" fill="url(#kanji)" opacity="0.95">幻</text>
+      </g>
+    </g>
+
+    <g clip-path="url(#band3)">
+      <rect width="3840" height="2160" fill="url(#bg)"/>
+      <rect width="3840" height="2160" fill="url(#haze1)"/>
+      <rect width="3840" height="2160" fill="url(#haze2)"/>
+      <g transform="translate(95 0)">
+        <text x="1878" y="1430" fill="#3ad6e6" opacity="0.5">幻</text>
+        <text x="1962" y="1430" fill="#ff7fb8" opacity="0.5">幻</text>
+        <text x="1920" y="1430" fill="url(#kanji)" opacity="0.95">幻</text>
+      </g>
+    </g>
+
+    <g clip-path="url(#band4)">
+      <rect width="3840" height="2160" fill="url(#bg)"/>
+      <rect width="3840" height="2160" fill="url(#haze1)"/>
+      <rect width="3840" height="2160" fill="url(#haze2)"/>
+      <g transform="translate(-70 0)">
+        <text x="1878" y="1430" fill="#3ad6e6" opacity="0.5">幻</text>
+        <text x="1962" y="1430" fill="#ff7fb8" opacity="0.5">幻</text>
+        <text x="1920" y="1430" fill="url(#kanji)" opacity="0.95">幻</text>
+      </g>
+    </g>
+  </g>
+  <rect x="1300" y="996"  width="380" height="5" fill="#3ad6e6" opacity="0.28"/>
+  <rect x="2150" y="1216" width="330" height="5" fill="#ff7fb8" opacity="0.28"/>
+  <rect x="1580" y="1420" width="260" height="4" fill="#c88ff0" opacity="0.26"/>
+  <rect x="2000" y="658"  width="280" height="4" fill="#3ad6e6" opacity="0.24"/>
+  <rect width="3840" height="2160" fill="url(#scan)"/>
+</svg>

@@ -1,0 +1,12 @@
+[kdeglobals][General]
+ColorScheme=Fantasma
+
+[kdeglobals][KDE]
+widgetStyle=Breeze
+
+[kdeglobals][Icons]
+Theme=Papirus-Dark
+
+[kwinrc][org.kde.kdecoration2]
+library=org.kde.kwin.aurorae
+theme=__aurorae__svg__fantasma

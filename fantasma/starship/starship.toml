@@ -1,0 +1,60 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+add_newline = true
+palette = 'fantasma'
+
+# el "format" de nivel raiz debe ir ANTES de [palettes]
+format = """
+[幻](bold violeta) $directory$git_branch$git_status$cmd_duration
+$character"""
+
+[palettes.fantasma]
+rosa     = '#ff7fb8'
+violeta  = '#c88ff0'
+violeta2 = '#a795f0'
+cian     = '#8fb8f0'
+ambar    = '#e0c68a'
+verde    = '#86d6b0'
+rojo     = '#ff8090'
+fg       = '#ddd6ee'
+caja     = '#382a52'
+tinta    = '#14111f'
+
+[character]
+success_symbol = '[❯](bold rosa)'
+error_symbol   = '[❯](bold rojo)'
+vimcmd_symbol  = '[❮](bold violeta)'
+
+[directory]
+style = 'bold violeta'
+home_symbol = '~'
+read_only = ' ro'
+read_only_style = 'bold rojo'
+truncation_length = 3
+truncation_symbol = '…/'
+format = '[$path$read_only ]($style)'
+
+[git_branch]
+symbol = ''
+format = ' [](fg:ambar)[ $branch ](fg:tinta bg:ambar)[](fg:ambar)'
+
+[git_status]
+format = ' [](fg:rosa)[ $all_status$ahead_behind ](fg:tinta bg:rosa)[](fg:rosa)'
+
+[cmd_duration]
+min_time = 500
+format = ' [](fg:cian)[ $duration ](fg:tinta bg:cian)[](fg:cian)'
+
+[gcloud]
+disabled = true
+
+[aws]
+disabled = true
+
+[azure]
+disabled = true
+
+[hostname]
+ssh_only = true
+style = 'bold rosa'
+format = '[$hostname]($style) '

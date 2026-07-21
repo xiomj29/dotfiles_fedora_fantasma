@@ -1,0 +1,16 @@
+[53f61a8f-1bcc-4529-8177-3a86d1a7c814]
+Description=neko sin marco
+noborder=true
+noborderrule=2
+skippager=true
+skippagerrule=2
+skipswitcher=true
+skipswitcherrule=2
+skiptaskbar=true
+skiptaskbarrule=2
+wmclass=neko
+wmclassmatch=2
+
+[General]
+count=1
+rules=53f61a8f-1bcc-4529-8177-3a86d1a7c814

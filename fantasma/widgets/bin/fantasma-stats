@@ -1,0 +1,60 @@
+#!/bin/sh
+
+read_cpu() { awk '/^cpu /{idle=$5+$6; tot=0; for(i=2;i<=NF;i++)tot+=$i; print tot, idle}' /proc/stat; }
+read_net() { awk -F: 'NR>2 {gsub(/ /,"",$1); if ($1!="lo") {split($2,a," "); rx+=a[1]; tx+=a[9]}} END {printf "%.0f %.0f", rx, tx}' /proc/net/dev; }
+
+c1=$(read_cpu); n1=$(read_net)
+sleep 0.5
+c2=$(read_cpu); n2=$(read_net)
+
+set -- $c1; t1=$1; i1=$2
+set -- $c2; t2=$1; i2=$2
+dt=$((t2 - t1)); di=$((i2 - i1))
+if [ "$dt" -gt 0 ]; then cpu=$(( (100 * (dt - di)) / dt )); else cpu=0; fi
+
+set -- $n1; r1=$1; x1=$2
+set -- $n2; r2=$1; x2=$2
+netd=$(awk -v a="$r1" -v b="$r2" 'BEGIN{printf "%.1f", (b-a)*2/1048576}')
+netu=$(awk -v a="$x1" -v b="$x2" 'BEGIN{printf "%.1f", (b-a)*2/1048576}')
+
+freq=$(awk '/MHz/{s+=$4; n++} END{if (n) printf "%.1f", s/n/1000; else print "-"}' /proc/cpuinfo)
+
+gpu="-"
+if [ -r /sys/class/drm/card1/gt_cur_freq_mhz ] && [ -r /sys/class/drm/card1/gt_max_freq_mhz ]; then
+  gpu=$(awk -v c="$(cat /sys/class/drm/card1/gt_cur_freq_mhz)" -v m="$(cat /sys/class/drm/card1/gt_max_freq_mhz)" \
+    'BEGIN{ if (m > 0) printf "%d", 100*c/m; else print "-" }')
+fi
+
+set -- $(free -b | awk '/^Mem:/{printf "%d %.1f %.0f", 100*$3/$2, $3/1073741824, ($2+536870912)/1073741824}')
+ram=$1; ramu=$2; ramt=$3
+
+tz=""
+for z in /sys/class/thermal/thermal_zone*; do
+  [ "$(cat "$z/type" 2>/dev/null)" = "x86_pkg_temp" ] && tz="$z/temp"
+done
+if [ -n "$tz" ]; then temp=$(( $(cat "$tz") / 1000 )); else temp="-"; fi
+
+set -- $(df -B1G --output=pcent,avail / | awk 'NR==2 {gsub("%","",$1); print $1, $2}')
+ssd=$1; ssdf=$2
+
+bat="-"; bats="-"
+for b in /sys/class/power_supply/BAT*; do
+  [ -r "$b/capacity" ] && bat=$(cat "$b/capacity") && bats=$(cat "$b/status")
+done
+
+up=$(awk '{h=int($1/3600); m=int(($1%3600)/60); printf "%d:%02d", h, m}' /proc/uptime)
+
+echo "CPU $cpu"
+echo "FREQ $freq"
+echo "GPU $gpu"
+echo "RAM $ram"
+echo "RAMU $ramu"
+echo "RAMT $ramt"
+echo "TEMP $temp"
+echo "SSD $ssd"
+echo "SSDF $ssdf"
+echo "NETD $netd"
+echo "NETU $netu"
+echo "BAT $bat"
+echo "BATS $bats"
+echo "UP $up"

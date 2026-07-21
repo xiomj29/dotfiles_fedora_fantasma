@@ -1,0 +1,718 @@
+#!/usr/bin/env python3
+import sys, math, os, glob, random
+os.environ["QT_QPA_PLATFORM"] = "xcb"
+try:
+    import tomllib
+except ImportError:
+    tomllib = None
+from PyQt6.QtWidgets import QApplication, QWidget, QMenu
+from PyQt6.QtCore    import Qt, QTimer, QRect, QPoint
+from PyQt6.QtGui     import QPainter, QColor, QPen, QPolygon, QRegion
+
+PX    = 3
+W     = 18
+H     = 18
+WIN_W = 240
+WIN_H = 90
+CAT_OX = WIN_W - 70
+
+W_  = "#f0ede8"
+LG  = "#d4c9be"
+MG  = "#b8a89a"
+DG  = "#6b5c52"
+PI  = "#f0a0a0"
+BL  = "#1a1a2e"
+AQ  = "#00e5ff"
+PU  = "#818cf8"
+RD  = "#f0a0a0"
+OR  = "#e8956d"
+YE  = "#f1c40f"
+GR  = "#2ecc71"
+PV  = "#9b59b6"
+LP  = "#d7bde2"
+DP  = "#6c3483"
+BK  = "#e74c3c"
+
+TPS = 20
+
+CFG = {
+    "cpu_alta":        75,
+    "cpu_tope":        80,
+    "temp_alta":       75,
+    "temp_critica":    85,
+    "bateria_baja":    20,
+    "bateria_critica": 10,
+    "nube_cada":       14,
+    "nube_dura":        5,
+    "dormir_tras":     40,
+    "cpu_dormir":       8,
+}
+
+_PALETA = {
+    "gato": "W_", "claro": "LG", "sombra": "MG",
+    "borde": "DG", "hocico": "OR", "nariz": "PI",
+}
+
+def load_config():
+    """Lee ~/.config/neko.toml si existe: [ajustes] y [colores]."""
+    if tomllib is None:
+        return
+    path = os.path.expanduser("~/.config/neko.toml")
+    try:
+        with open(path, "rb") as fh:
+            data = tomllib.load(fh)
+    except FileNotFoundError:
+        return
+    except Exception as e:
+        print(f"neko: config ignorada ({e})", file=sys.stderr)
+        return
+    for k, v in data.get("ajustes", {}).items():
+        if k in CFG and isinstance(v, (int, float)):
+            CFG[k] = v
+    g = globals()
+    for k, v in data.get("colores", {}).items():
+        var = _PALETA.get(k)
+        if var and isinstance(v, str):
+            g[var] = v
+
+
+def c(ch):
+    return {
+        ' ': None, 'W': W_, 'L': LG, 'M': MG, 'D': DG,
+        'P': PI,   'B': BL, 'A': AQ, 'U': PU, 'R': RD,
+        'O': OR,   'Y': YE, 'G': GR, 'V': PV, 'C': LP,
+        'K': DP,   'E': BK,
+    }.get(ch, None)
+
+def c_bed(ch):
+    return {' ': None, 'X': DG, 'C': LP, 'V': PV, 'K': DP}.get(ch, None)
+
+BED = [
+    " XXXXXXXXXXXX   ",
+    " XCCCCCCCCVVX   ",
+    " XCCCCCCCCVVX   ",
+    " XKKKKKKKKKKX   ",
+    " XKKKKKKKKKKX   ",
+    " XXXXXXXXXXXX   ",
+    " XX        XX   ",
+]
+
+def draw_bed(painter, ox, oy):
+    for row, line in enumerate(BED):
+        for col, ch in enumerate(line):
+            color = c_bed(ch)
+            if color is None:
+                continue
+            painter.fillRect(ox + col * PX, oy + row * PX, PX, PX, QColor(color))
+
+IDLE = [
+    "                  ",
+    "   DD    DD       ",
+    "  DWWD  DWWD      ",
+    "  DPPD  DPPD      ",
+    " DWWWWWWWWWD      ",
+    " DWWWWWWWWWD      ",
+    " DWBBWWWBBWD      ",
+    " DWWWWWWWWWD      ",
+    " DWWWLWWWWWD      ",
+    " DWWWDWWWWWD      ",
+    " DRWWWWWWRWD      ",
+    " DOOOOOOOOWD      ",
+    "  DWWWWWWWD       ",
+    "  DWWWWWWWD       ",
+    "  DWWWWWWWD       ",
+    "  DDWWWWDDD       ",
+    "   DDDDDD         ",
+    "                  ",
+]
+
+BLINK = [
+    "                  ",
+    "   DD    DD       ",
+    "  DWWD  DWWD      ",
+    "  DPPD  DPPD      ",
+    " DWWWWWWWWWD      ",
+    " DWWWWWWWWWD      ",
+    " DWMMWWWMMWD      ",
+    " DWWWWWWWWWD      ",
+    " DWWWLWWWWWD      ",
+    " DWWWDWWWWWD      ",
+    " DRWWWWWWRWD      ",
+    " DOOOOOOOOWD      ",
+    "  DWWWWWWWD       ",
+    "  DWWWWWWWD       ",
+    "  DWWWWWWWD       ",
+    "  DDWWWWDDD       ",
+    "   DDDDDD         ",
+    "                  ",
+]
+
+SLEEP = [
+    "                  ",
+    "   DD    DD       ",
+    "  DWWD  DWWD      ",
+    "  DPPD  DPPD      ",
+    " DWWWWWWWWWD      ",
+    " DWWWWWWWWWD      ",
+    " DWDWWWWDWWD      ",
+    " DWWDWWDWWWD      ",
+    " DWWWWWWWWWD      ",
+    " DWWWWWWWWWD      ",
+    " DMWWWWWWMWD      ",
+    " DOOOOOOOOWD      ",
+    "  DWWWWWWWD       ",
+    "  DMWWWWWMD       ",
+    "   DDDDDD         ",
+    "                  ",
+    "                  ",
+    "                  ",
+]
+
+ANGRY = [
+    "                  ",
+    "   DD    DD       ",
+    "  DWWD  DWWD      ",
+    "  DPPD  DPPD      ",
+    " DWWWWWWWWWD      ",
+    " DDDWWWWWDDD      ",
+    " DWBBWWWBBWD      ",
+    " DWWWWWWWWWD      ",
+    " DWWWLWWWWWD      ",
+    " DWDDDDDDDWD      ",
+    " DRWWWWWWRWD      ",
+    " DOOOOOOOOWD      ",
+    "  DWWWWWWWD       ",
+    "  DWWWWWWWD       ",
+    "  DWWWWWWWD       ",
+    "  DDWWWWDDD       ",
+    "   DDDDDD         ",
+    "                  ",
+]
+
+HOT = [
+    "                  ",
+    "   DD    DD       ",
+    "  DWWD  DWWD      ",
+    "  DPPD  DPPD      ",
+    " DRRRRRRRRRD      ",
+    " DRRRRRRRRRD      ",
+    " DRMRRRRRMRD      ",
+    " DRRRRRRRRRD      ",
+    " DRRRLRRRPRD      ",
+    " DRRRDRRRRRD      ",
+    " DRRRRRRRRRD      ",
+    " DOOOOOOOOWD      ",
+    "  DWWWWWWWD       ",
+    "  DWWWWWWWD       ",
+    "  DWWWWWWWD       ",
+    "  DDWWWWDDD       ",
+    "   DDDDDD         ",
+    "                  ",
+]
+
+WORRIED = [
+    "                  ",
+    "   DD    DD       ",
+    "  DWWD  DWWD      ",
+    "  DPPD  DPPD      ",
+    " DWWWWWWWWWD      ",
+    " DWWWWWWWWWD      ",
+    " DDWBWWWBWDD      ",
+    " DWWWWWWWWWD      ",
+    " DWWWLWWWWWD      ",
+    " DWWWWWWWWWD      ",
+    " DRWWWWWWRWD      ",
+    " DWWDOOODDWD      ",
+    "  DWWWWWWWD       ",
+    "  DWWWWWWWD       ",
+    "  DWWWWWWWD       ",
+    "  DDWWWWDDD       ",
+    "   DDDDDD         ",
+    "                  ",
+]
+
+HAPPY = [
+    "                  ",
+    "   DD    DD       ",
+    "  DWWD  DWWD      ",
+    "  DPPD  DPPD      ",
+    " DWWWWWWWWWD      ",
+    " DWWWWWWWWWD      ",
+    " DWWBWWWBWWD      ",
+    " DWGWWWWGWWD      ",
+    " DWWWLWWWWWD      ",
+    " DWWDWWWDWWD      ",
+    " DRWWWWWWRWD      ",
+    " DOOOOOOOOWD      ",
+    "  DWWWWWWWD       ",
+    "  DWWWWWWWD       ",
+    "  DWWWWWWWD       ",
+    "  DDWWWWDDD       ",
+    "   DDDDDD         ",
+    "                  ",
+]
+
+SPRITES = {
+    "idle":    IDLE,
+    "blink":   BLINK,
+    "sleep":   SLEEP,
+    "angry":   ANGRY,
+    "hot":     HOT,
+    "worried": WORRIED,
+    "happy":   HAPPY,
+}
+
+def draw_grid(painter, grid, ox, oy):
+    for row, line in enumerate(grid):
+        for col, ch in enumerate(line):
+            color = c(ch)
+            if color is None:
+                continue
+            painter.fillRect(ox + col * PX, oy + row * PX, PX, PX, QColor(color))
+
+def get_cpu():
+    try:
+        parts = open("/proc/stat").readline().split()
+        idle  = int(parts[4])
+        total = sum(int(x) for x in parts[1:])
+        return idle, total
+    except:
+        return 0, 1
+
+def get_temp():
+    paths = glob.glob("/sys/class/thermal/thermal_zone*/temp")
+    temps = []
+    for p in paths:
+        try:
+            temps.append(int(open(p).read()) / 1000)
+        except:
+            pass
+    return max(temps) if temps else 0
+
+def get_battery():
+    base = "/sys/class/power_supply"
+    try:
+        bats = [d for d in os.listdir(base) if d.startswith("BAT")]
+        if not bats:
+            return None, None
+        bat  = bats[0]
+        cap  = int(open(f"{base}/{bat}/capacity").read())
+        stat = open(f"{base}/{bat}/status").read().strip()
+        return cap, stat
+    except:
+        return None, None
+
+
+def get_mem():
+    """Porcentaje de RAM usada."""
+    try:
+        info = {}
+        for line in open("/proc/meminfo"):
+            k, _, rest = line.partition(":")
+            info[k] = int(rest.split()[0])
+        total = info["MemTotal"]
+        avail = info.get("MemAvailable", info.get("MemFree", total))
+        return 100 * (total - avail) / total
+    except:
+        return 0
+
+
+def get_threads():
+    """Número total de hilos/tareas en el sistema."""
+    try:
+        return int(open("/proc/loadavg").read().split()[3].split("/")[1])
+    except:
+        return 0
+
+
+def get_screen_geometry():
+    """Obtiene el ancho y alto de la pantalla primaria."""
+    app = QApplication.instance()
+    if app:
+        screen = app.primaryScreen()
+        if screen:
+            geo = screen.availableGeometry()
+            return geo.x() + geo.width(), geo.y(), geo.width(), geo.height()
+    return 1920, 0, 1920, 1080
+
+
+class Neko(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.Tool |
+            Qt.WindowType.WindowStaysOnTopHint |
+            Qt.WindowType.BypassWindowManagerHint
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
+        self.setFixedSize(WIN_W, WIN_H)
+
+        self._position_window()
+        QTimer.singleShot(200, self._position_window)
+
+        self.tick       = 0
+        self.estado     = "idle"
+        self.mood       = "idle"
+        self.drag       = None
+        self._moved     = False
+        self.tail_phase = 0.0
+        self.blink_cd   = 60
+        self.sys_cd     = 0
+        self.calm       = 0
+        self.hover_cd   = 0
+
+        self.bob_phase  = 0.0
+        self.gesture    = None
+        self.g_t        = 0
+        self.g_len      = 1
+        self.gesture_cd = 5 * 20
+        self._cpu_idle, self._cpu_total = get_cpu()
+
+        self.cpu     = 0.0
+        self.temp    = 0.0
+        self.mem     = 0.0
+        self.threads = 0
+        self.cap     = None
+        self.status  = None
+        self.alert   = False
+
+        self.bubble_text  = None
+        self.bubble_ttl   = 0
+        self.bubble_cd    = 60
+        self.bubble_alert = False
+
+        bg_h         = len(BED) * PX
+        self._acc_oy = WIN_H - bg_h - 2
+        self._cat_oy = self._acc_oy - H * PX + 8
+        self._update_mask()
+
+        timer = QTimer(self)
+        timer.timeout.connect(self._tick)
+        timer.start(50)
+
+    def _position_window(self):
+        right_x, top_y, _, _ = get_screen_geometry()
+        self.move(right_x - WIN_W - 12, top_y + 12)
+
+    def _check_system(self):
+        idle2, total2 = get_cpu()
+        d_idle  = idle2  - self._cpu_idle
+        d_total = total2 - self._cpu_total
+        self._cpu_idle, self._cpu_total = idle2, total2
+        cpu  = 100 * (1 - d_idle / max(d_total, 1))
+        temp = get_temp()
+        cap, status = get_battery()
+
+        self.cpu, self.temp   = cpu, temp
+        self.cap, self.status = cap, status
+        self.mem     = get_mem()
+        self.threads = get_threads()
+
+        charging = (status == "Charging")
+        self.alert = (temp >= CFG["temp_critica"]) or \
+                     (cap is not None and not charging and cap <= CFG["bateria_critica"])
+
+        if cpu > CFG["cpu_alta"]:
+            return "angry"
+        if temp > CFG["temp_alta"]:
+            return "hot"
+        if cap is not None and not charging and cap <= CFG["bateria_baja"]:
+            return "worried"
+        if cap is not None and charging:
+            return "happy"
+        return "idle"
+
+    def _tick(self):
+        self.tick       += 1
+        self.tail_phase += 0.12
+        self.blink_cd   -= 1
+        self.sys_cd     -= 1
+        self.bubble_cd  -= 1
+        if self.hover_cd > 0:
+            self.hover_cd -= 1
+
+        self.bob_phase += 0.04 if self.estado == "sleep" else 0.09
+
+        if self.gesture is not None:
+            self.g_t += 1
+            if self.g_t >= self.g_len:
+                self.gesture = None
+        elif self.estado in ("idle", "blink"):
+            self.gesture_cd -= 1
+            if self.gesture_cd <= 0:
+                self._do_gesture(random.choice(["hop", "lean_l", "lean_r", "wiggle", "stretch"]))
+                self.gesture_cd = random.randint(6 * TPS, 14 * TPS)
+
+        if self.cpu < CFG["cpu_dormir"]:
+            self.calm += 1
+        else:
+            self.calm = 0
+
+        if self.sys_cd <= 0:
+            self.sys_cd = 60
+            self.mood = self._check_system()
+            if self.mood != "idle":
+                if self.estado != self.mood:
+                    self.estado   = self.mood
+                    self.blink_cd = 80
+            elif self.estado not in ("idle", "blink", "sleep"):
+                self.estado   = "idle"
+                self.blink_cd = 80
+
+        dormir_ticks = int(CFG["dormir_tras"] * TPS)
+        if self.mood == "idle":
+            if self.estado in ("idle", "blink") and self.calm >= dormir_ticks:
+                self.estado = "sleep"
+            elif self.estado == "sleep" and self.calm < dormir_ticks:
+                self.estado   = "idle"
+                self.blink_cd = 80
+
+        if self.estado in ("idle", "blink") and self.blink_cd <= 0:
+            if self.estado == "idle":
+                self.estado   = "blink"
+                self.blink_cd = 5
+            else:
+                self.estado   = "idle"
+                self.blink_cd = 80 + (self.tick % 40)
+
+        if self.bubble_ttl > 0:
+            self.bubble_ttl -= 1
+            if self.bubble_ttl == 0:
+                self.bubble_text = None
+                self._update_mask()
+        elif self.bubble_cd <= 0:
+            if self.estado == "sleep" and not self.alert:
+                self.bubble_cd = int(CFG["nube_cada"] * TPS)
+            else:
+                self._show_bubble()
+
+        self.update()
+
+    def _show_bubble(self):
+        self.bubble_text  = self._build_bubble()
+        self.bubble_alert = self.alert
+        dur, gap = CFG["nube_dura"], CFG["nube_cada"]
+        if self.alert:
+            dur, gap = max(dur, 7), 4
+        self.bubble_ttl = int(dur * TPS)
+        self.bubble_cd  = int(gap * TPS) + (self.tick % 80)
+        self._update_mask()
+
+    def _do_gesture(self, name):
+        self.gesture = name
+        self.g_t     = 0
+        self.g_len   = {"hop": 16, "lean_l": 26, "lean_r": 26,
+                        "wiggle": 22, "stretch": 30}.get(name, 20)
+
+    def _gesture_offset(self):
+        """Desplazamiento (dx, dy) del gato según respiración, estado y gesto."""
+        dx = dy = 0
+        amp = 1.6 if self.estado == "sleep" else 1.0
+        dy += round(math.sin(self.bob_phase) * amp)
+
+        if self.estado == "angry":
+            dx += 1 if (self.tick // 2) % 2 else -1
+        elif self.estado == "worried":
+            dx += 1 if (self.tick // 3) % 2 else -1
+        elif self.estado == "happy":
+            dy -= abs(round(math.sin(self.tick * 0.25) * 3))
+
+        if self.gesture:
+            prog = self.g_t / self.g_len
+            arc  = math.sin(prog * math.pi)
+            if self.gesture == "hop":
+                dy -= round(arc * 7)
+            elif self.gesture == "lean_l":
+                dx -= round(arc * 4)
+            elif self.gesture == "lean_r":
+                dx += round(arc * 4)
+            elif self.gesture == "wiggle":
+                dx += round(math.sin(prog * math.pi * 4) * 3)
+            elif self.gesture == "stretch":
+                dx -= round(arc * 3)
+                dy += round(arc * 1)
+        return dx, dy
+
+    def _bubble_rect(self):
+        return QRect(6, self._cat_oy - 4, CAT_OX - 14, 40)
+
+    def _update_mask(self):
+        """La máscara abraza al gato y la cama (y la nube); nada de caja."""
+        cat = QRect(CAT_OX - 12, self._cat_oy - 12, 24 * PX, 18 * PX + 12)
+        bed = QRect(CAT_OX - 2, self._acc_oy - 2, 13 * PX + 6, len(BED) * PX + 6)
+        region = QRegion(cat).united(QRegion(bed))
+        if self.bubble_text:
+            region = region.united(QRegion(self._bubble_rect().adjusted(0, 0, 11, 0)))
+        self.setMask(region)
+
+    def _build_bubble(self):
+        cpu, temp, mem, thr = self.cpu, self.temp, self.mem, self.threads
+        cap, status = self.cap, self.status
+        charging = (status == "Charging")
+        if cap is not None and not charging and cap <= CFG["bateria_critica"]:
+            return f"¡batería al {cap}%! conéctame"
+        if temp >= CFG["temp_critica"]:
+            return f"¡ayudaaa {temp:.0f}°C!"
+        if temp >= CFG["temp_alta"]:
+            return f"¡uf! {temp:.0f}°C, qué calor"
+        if cpu >= CFG["cpu_tope"]:
+            return f"¡{cpu:.0f}% de CPU! a tope"
+        stats = [
+            f"{temp:.0f}°C ",
+            f"CPU al {cpu:.0f}%",
+            f"RAM al {mem:.0f}%",
+            f"{thr} hilos girando",
+        ]
+        if charging:
+            stats.append(f"cargando... {cap}%")
+        elif cap is not None:
+            stats.append(f"batería {cap}%")
+        return random.choice(stats)
+
+    def _draw_bubble(self, p):
+        if not self.bubble_text:
+            return
+        r = self._bubble_rect()
+        bx, by, bw, bh = r.x(), r.y(), r.width(), r.height()
+        borde = BK if self.bubble_alert else DG
+        if self.bubble_alert:
+            p.setOpacity(0.7 + abs(math.sin(self.tick * 0.18)) * 0.3)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        p.setPen(QPen(QColor(borde), 2))
+        p.setBrush(QColor(W_))
+        p.drawRoundedRect(bx, by, bw, bh, 9, 9)
+        tail = QPolygon([
+            QPoint(bx + bw - 8, by + bh - 18),
+            QPoint(bx + bw + 10, by + bh // 2),
+            QPoint(bx + bw - 8, by + bh - 4),
+        ])
+        p.drawPolygon(tail)
+        p.setPen(Qt.PenStyle.NoPen)
+        p.fillRect(bx + bw - 6, by + bh - 17, 6, 14, QColor(W_))
+        p.setPen(QColor(BK if self.bubble_alert else BL))
+        f = p.font(); f.setPointSize(8); f.setBold(True); p.setFont(f)
+        p.drawText(QRect(bx + 7, by + 4, bw - 14, bh - 8),
+                   int(Qt.AlignmentFlag.AlignCenter) | int(Qt.TextFlag.TextWordWrap),
+                   self.bubble_text)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+        p.setOpacity(1.0)
+
+    def paintEvent(self, _):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+
+        dx, dy = self._gesture_offset()
+        acc_oy = self._acc_oy
+        cat_oy = self._cat_oy + dy
+        ox     = CAT_OX + dx
+
+        self._draw_bubble(p)
+        draw_bed(p, CAT_OX, acc_oy)
+
+        sprite = SPRITES.get(self.estado, IDLE)
+        draw_grid(p, sprite, ox, cat_oy)
+
+        tail_swing  = int(math.sin(self.tail_phase) * 3)
+        tail_base_x = ox + 12 * PX
+        tail_base_y = cat_oy + 14 * PX
+        for i in range(4):
+            tx = tail_base_x + i * PX + tail_swing * (i + 1) // 3
+            ty = tail_base_y + i * PX // 2
+            col = W_ if i % 2 == 0 else MG
+            p.fillRect(tx - 1, ty - 1, PX + 2, PX + 2, QColor(DG))
+            p.fillRect(tx, ty, PX, PX, QColor(col))
+
+        if self.estado == "sleep":
+            alpha = 0.4 + abs(math.sin(self.tick * 0.06)) * 0.55
+            p.setOpacity(alpha)
+            f = p.font(); f.setPointSize(7); f.setBold(True); p.setFont(f)
+            p.setPen(QColor(PU))
+            p.drawText(ox + W*PX - 4, cat_oy + 14, "z")
+            p.drawText(ox + W*PX + 2, cat_oy + 8,  "z")
+            p.setOpacity(1.0)
+
+        sym, sym_col = None, YE
+        if self.estado == "angry":
+            sym, sym_col = "!!", BK
+        elif self.estado == "hot":
+            sym, sym_col = "~~", OR
+        elif self.estado == "happy":
+            sym, sym_col = "♥", GR
+        elif self.estado == "worried":
+            sym, sym_col = "?!", PU
+
+        if sym:
+            alpha = 0.6 + abs(math.sin(self.tick * 0.12)) * 0.4
+            p.setOpacity(alpha)
+            f = p.font(); f.setPointSize(8); f.setBold(True); p.setFont(f)
+            p.setPen(QColor(sym_col))
+            p.drawText(ox + W*PX - 4, cat_oy + 6, sym)
+            p.setOpacity(1.0)
+
+    def _wake(self):
+        """Despertar al interactuar."""
+        self.calm = 0
+        if self.estado == "sleep":
+            self.estado   = "idle"
+            self.blink_cd = 80
+            self._do_gesture("stretch")
+
+    def _say_now(self):
+        """Forzar un comentario inmediato (clic, hover o menú)."""
+        if self.bubble_ttl > 0:
+            return
+        self._show_bubble()
+
+    def enterEvent(self, _):
+        self._wake()
+        if self.gesture is None:
+            self._do_gesture("wiggle")
+        if self.hover_cd <= 0:
+            self.hover_cd = int(8 * TPS)
+            self._say_now()
+
+    def mousePressEvent(self, e):
+        self._wake()
+        if e.button() == Qt.MouseButton.LeftButton:
+            self.drag   = e.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            self._moved = False
+
+    def mouseMoveEvent(self, e):
+        if self.drag and e.buttons() == Qt.MouseButton.LeftButton:
+            self.move(e.globalPosition().toPoint() - self.drag)
+            self._moved = True
+
+    def mouseReleaseEvent(self, e):
+        if e.button() == Qt.MouseButton.LeftButton and self.drag and not self._moved:
+            self._do_gesture("hop")
+            self._say_now()
+        self.drag = None
+
+    def mouseDoubleClickEvent(self, _):
+        self.close()
+
+    def contextMenuEvent(self, e):
+        m = QMenu(self)
+        m.addAction("Decir algo", self._say_now)
+        m.addAction("Ocultar 1 hora", self._hide_a_while)
+        m.addSeparator()
+        m.addAction("Salir", self.close)
+        m.exec(e.globalPos())
+
+    def _hide_a_while(self):
+        self.hide()
+        QTimer.singleShot(3600 * 1000, self.show)
+
+
+if __name__ == "__main__":
+    load_config()
+    app = QApplication(sys.argv)
+    # app_id/WM_CLASS estable para que KWin lo identifique (regla "sin marco")
+    app.setApplicationName("neko")
+    app.setDesktopFileName("neko")
+    neko = Neko()
+    neko.setWindowTitle("neko")
+    neko.show()
+    sys.exit(app.exec())

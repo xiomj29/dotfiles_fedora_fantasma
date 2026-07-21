@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Neko
+Exec=bash -c 'sleep 3 && python3 /home/xishay/.local/bin/neko'
+Hidden=false
+X-GNOME-Autostart-enabled=true

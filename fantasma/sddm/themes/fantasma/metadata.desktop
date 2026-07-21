@@ -1,0 +1,12 @@
+[SddmGreeterTheme]
+Name=幻 Fantasma
+Description=Cyberpunk neo-Tokio login — dark plum, violet accents, kanji 幻
+Author=Xio
+License=MIT
+Type=sddm-theme
+Version=1.0
+Screenshot=
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=fantasma
+Theme-API=2.0

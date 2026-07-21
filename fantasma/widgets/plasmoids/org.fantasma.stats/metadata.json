@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "Xio" }],
+        "Category": "System Information",
+        "Description": "Neural Pulse — system vitals with a live EKG — 幻 Fantasma",
+        "Icon": "utilities-system-monitor",
+        "Id": "org.fantasma.stats",
+        "License": "MIT",
+        "Name": "幻 Vitals",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

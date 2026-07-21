@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "Xio" }],
+        "Category": "Graphics",
+        "Description": "Pop-up window photo frame with neon border — 幻 Fantasma",
+        "Icon": "viewimage",
+        "Id": "org.fantasma.frame",
+        "License": "MIT",
+        "Name": "幻 Frame",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
