@@ -175,15 +175,20 @@ PlasmoidItem {
                     clip: true
                     Text {
                         id: titleTxt
+                        x: 0
                         text: root.trackTitle
                         color: root.cText
                         font.pixelSize: Math.max(13, root2.height * 0.11)
                         font.bold: true
                         font.family: "JetBrainsMono Nerd Font"
-                        readonly property bool overflow: implicitWidth > titleClip.width
+                        readonly property bool overflow: titleClip.width > 0 && implicitWidth > titleClip.width
+                        onOverflowChanged: if (!overflow) x = 0
                         SequentialAnimation on x {
+                            id: marquee
                             running: titleTxt.overflow && root.isPlaying
                             loops: Animation.Infinite
+                            onRunningChanged: if (!running) titleTxt.x = 0
+                            PropertyAction { target: titleTxt; property: "x"; value: 0 }
                             PauseAnimation { duration: 1200 }
                             NumberAnimation {
                                 from: 0; to: Math.min(0, titleClip.width - titleTxt.implicitWidth)
