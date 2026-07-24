@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# 幻 Fantasma — apply.sh
+# Autor: xishay
+# GitHub: https://github.com/xiomj29
+
 set -uo pipefail
 
 RICE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -51,6 +55,7 @@ cp "$RICE/konsole/Fantasma.profile"          ~/.local/share/konsole/
 cp "$RICE/starship/starship.toml"            ~/.config/starship.toml
 cp "$RICE/wallpaper/fantasma.png"            ~/.local/share/wallpapers/Fantasma/
 cp "$RICE/wallpaper/fantasma-glitch.png"     ~/.local/share/wallpapers/Fantasma/
+cp "$RICE/wallpaper/wallpaper.mp4"           ~/.local/share/wallpapers/Fantasma/
 ok "Archivos copiados"
 
 if ! fc-list | grep -qi "JetBrainsMono Nerd Font"; then
@@ -184,8 +189,23 @@ kwriteconfig6 --file kdeglobals --group General --key LastUsedCustomAccentColor 
 kwriteconfig6 --file kdeglobals --group WM --key activeBackground "$WM_ACTIVE_BG"
 kwriteconfig6 --file kdeglobals --group WM --key activeForeground "$WM_ACTIVE_FG"
 ok "Accent violeta + barra violeta reafirmados"
-plasma-apply-wallpaperimage "$HOME/.local/share/wallpapers/Fantasma/fantasma-glitch.png" >/dev/null 2>&1 \
-  && ok "Wallpaper (Glitch Phantom)" || warn "No se pudo fijar el wallpaper automáticamente (ponlo a mano)"
+VIDEO_PLUGIN="luisbocanegra.smart.video.wallpaper.reborn"
+VIDEO_URL="file://$HOME/.local/share/wallpapers/Fantasma/wallpaper.mp4"
+if [ -n "$QDBUS" ] && { [ -d "/usr/share/plasma/wallpapers/$VIDEO_PLUGIN" ] || [ -d "$HOME/.local/share/plasma/wallpapers/$VIDEO_PLUGIN" ]; }; then
+  WJS='var urls = JSON.stringify([{filename: "'"$VIDEO_URL"'", enabled: true, duration: 0, customDuration: 0, playbackRate: 0, loop: false}]);
+var d = desktops();
+for (var i = 0; i < d.length; i++) {
+  d[i].wallpaperPlugin = "'"$VIDEO_PLUGIN"'";
+  d[i].currentConfigGroup = ["Wallpaper", "'"$VIDEO_PLUGIN"'", "General"];
+  d[i].writeConfig("VideoUrls", urls);
+}'
+  "$QDBUS" org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "$WJS" >/dev/null 2>&1 \
+    && ok "Wallpaper de video (Jinx)" || warn "No se pudo fijar el wallpaper de video (ponlo a mano)"
+else
+  plasma-apply-wallpaperimage "$HOME/.local/share/wallpapers/Fantasma/fantasma-glitch.png" >/dev/null 2>&1 \
+    && ok "Wallpaper (Glitch Phantom — falta plugin de video, instala plasma-smart-video-wallpaper-reborn)" \
+    || warn "No se pudo fijar el wallpaper automáticamente (ponlo a mano)"
+fi
 
 GLITCH="file://$HOME/.local/share/wallpapers/Fantasma/fantasma-glitch.png"
 kwriteconfig6 --file kscreenlockerrc --group Greeter --group Wallpaper --group org.kde.image --group General --key Image "$GLITCH"
@@ -232,6 +252,74 @@ print(d.id+"|"+ids.join(",")+"|"+n);'
   fi
 else
   warn "qdbus no disponible: añade los widgets a mano desde «Añadir widgets»."
+fi
+
+say "Islas flotantes de la barra superior..."
+if [ -n "$QDBUS" ]; then
+  ISLAS_JS='
+var ps = panels();
+for (var i = ps.length - 1; i >= 0; i--) {
+  if (ps[i].location == "top") { ps[i].remove(); }
+}
+function isla(alignment, offset) {
+  var p = new Panel;
+  p.location = "top";
+  p.height = 38;
+  p.floating = true;
+  p.alignment = alignment;
+  p.offset = offset;
+  p.hiding = "dodgewindows";
+  p.opacity = "translucent";
+  return p;
+}
+var pL = isla("left", 12);
+pL.addWidget("luisbocanegra.intel.gpu.monitor");
+var cpu = pL.addWidget("org.kde.plasma.systemmonitor.cpu");
+cpu.currentConfigGroup = ["Appearance"];
+cpu.writeConfig("chartFace", "org.kde.ksysguard.piechart");
+cpu.writeConfig("title", "CPU");
+cpu.currentConfigGroup = ["Sensors"];
+cpu.writeConfig("highPrioritySensorIds", "[\"cpu/all/usage\"]");
+cpu.writeConfig("totalSensors", "[\"cpu/all/usage\"]");
+cpu.currentConfigGroup = ["SensorColors"];
+cpu.writeConfig("cpu/all/usage", "255,127,184");
+var ram = pL.addWidget("org.kde.plasma.systemmonitor.memory");
+ram.currentConfigGroup = ["Appearance"];
+ram.writeConfig("chartFace", "org.kde.ksysguard.piechart");
+ram.writeConfig("title", "RAM");
+ram.currentConfigGroup = ["Sensors"];
+ram.writeConfig("highPrioritySensorIds", "[\"memory/physical/used\"]");
+ram.writeConfig("totalSensors", "[\"memory/physical/usedPercent\"]");
+ram.currentConfigGroup = ["SensorColors"];
+ram.writeConfig("memory/physical/used", "200,143,240");
+var net = pL.addWidget("org.kde.plasma.systemmonitor.net");
+net.currentConfigGroup = ["Appearance"];
+net.writeConfig("chartFace", "org.kde.ksysguard.linechart");
+net.writeConfig("title", "NET");
+net.currentConfigGroup = ["SensorColors"];
+net.writeConfig("network/all/download", "58,214,230");
+net.writeConfig("network/all/upload", "255,216,138");
+pL.lengthMode = "fit";
+var pC = isla("center", 0);
+pC.addWidget("org.kde.plasma.digitalclock");
+pC.addWidget("org.kde.plasma.notifications");
+pC.addWidget("org.kde.plasma.colorpicker");
+pC.lengthMode = "fit";
+pC.maximumLength = 560;
+var pR = isla("right", 12);
+pR.addWidget("org.kde.plasma.brightness");
+pR.addWidget("org.kde.plasma.nightcolorcontrol");
+pR.addWidget("org.kde.plasma.networkmanagement");
+pR.addWidget("org.kde.plasma.bluetooth");
+pR.addWidget("org.kde.plasma.clipboard");
+pR.addWidget("org.kde.plasma.battery");
+pR.addWidget("org.kde.plasma.lock_logout");
+pR.lengthMode = "fit";'
+  "$QDBUS" org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "$ISLAS_JS" >/dev/null 2>&1 \
+    && ok "Tres islas en la barra superior (telemetría / tiempo+media / control)" \
+    || warn "No se pudieron crear las islas del panel superior"
+else
+  warn "qdbus no disponible: no se crearon las islas del panel superior"
 fi
 
 [ -n "$QDBUS" ] && "$QDBUS" org.kde.KWin /KWin org.kde.KWin.reconfigure >/dev/null 2>&1 || true

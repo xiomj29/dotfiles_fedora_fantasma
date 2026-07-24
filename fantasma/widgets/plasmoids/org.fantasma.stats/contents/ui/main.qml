@@ -1,3 +1,7 @@
+// 幻 Fantasma — org.fantasma.stats
+// Autor: xishay
+// GitHub: https://github.com/xiomj29
+
 import QtQuick
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
@@ -38,13 +42,14 @@ PlasmoidItem {
     property var hRam:  []
     property var hTemp: []
     property int sampleTick: 0
-    property real scrollPx: 0
+    property double lastSampleAt: 0
 
     function pushSample(c, g, r, t) {
         hCpu.push(c); hGpu.push(g); hRam.push(r); hTemp.push(t)
         if (hCpu.length > maxN) {
             hCpu.shift(); hGpu.shift(); hRam.shift(); hTemp.shift()
         }
+        lastSampleAt = Date.now()
         sampleTick++
     }
 
@@ -248,20 +253,11 @@ PlasmoidItem {
             Canvas {
                 id: scope
                 anchors.fill: parent
-                property int lastTick: 0
                 readonly property real stepPx: (width - 10) / (root.maxN - 1)
 
                 Timer {
                     interval: 40; running: scope.visible; repeat: true
-                    onTriggered: {
-                        if (scope.lastTick !== root.sampleTick) {
-                            scope.lastTick = root.sampleTick
-                            root.scrollPx -= scope.stepPx
-                        }
-                        root.scrollPx = Math.min(root.scrollPx + scope.stepPx * 40 / root.pollMs,
-                                                 scope.stepPx)
-                        scope.requestPaint()
-                    }
+                    onTriggered: scope.requestPaint()
                 }
 
                 onPaint: {
@@ -282,7 +278,8 @@ PlasmoidItem {
                     var n = root.hCpu.length
                     var full = (n >= root.maxN)
                     var step = full ? scope.stepPx : (w - 10) / (n - 1)
-                    var scroll = full ? root.scrollPx : 0
+                    var elapsed = (Date.now() - root.lastSampleAt) / root.pollMs
+                    var scroll = full ? scope.stepPx * Math.min(1, Math.max(0, elapsed)) : 0
                     var pad = 6
                     var span = h - pad * 2
 

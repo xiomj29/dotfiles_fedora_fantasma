@@ -1,3 +1,7 @@
+// 幻 Fantasma — org.fantasma.clock
+// Autor: xishay
+// GitHub: https://github.com/xiomj29
+
 import QtQuick
 import QtQuick.Layouts
 import org.kde.plasma.plasmoid
@@ -7,9 +11,9 @@ import org.kde.kirigami as Kirigami
 PlasmoidItem {
     id: root
 
-    readonly property color cRose:   "#ff7fb8"
-    readonly property color cViolet: "#c88ff0"
-    readonly property color cCyan:   "#3ad6e6"
+    readonly property color cCyan:   "#6be8f2"
+    readonly property color cRose:   "#ff66bb"
+    readonly property color cViolet: "#c07bff"
     readonly property color cText:   "#e6e0ea"
 
     property date now: new Date()
@@ -37,14 +41,14 @@ PlasmoidItem {
                 spacing: 0
                 Text {
                     text: Qt.formatDateTime(root.now, "HH")
-                    color: root.cViolet
+                    color: root.cCyan
                     font.pixelSize: face.unit
                     font.bold: true
                     font.family: "JetBrainsMono Nerd Font"
                 }
                 Text {
                     text: ":"
-                    color: root.cRose
+                    color: root.cViolet
                     font.pixelSize: face.unit
                     font.bold: true
                     font.family: "JetBrainsMono Nerd Font"
@@ -91,8 +95,8 @@ PlasmoidItem {
                 radius: height / 2
                 gradient: Gradient {
                     orientation: Gradient.Horizontal
-                    GradientStop { position: 0.0; color: root.cRose }
-                    GradientStop { position: 1.0; color: root.cViolet }
+                    GradientStop { position: 0.0; color: root.cCyan }
+                    GradientStop { position: 1.0; color: root.cRose }
                 }
             }
         }
