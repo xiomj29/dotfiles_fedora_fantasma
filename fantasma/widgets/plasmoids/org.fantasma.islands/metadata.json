@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "Xio" }],
+        "Category": "Windows and Tasks",
+        "Description": "Islas flotantes de la barra superior — 幻 Fantasma",
+        "Icon": "computer",
+        "Id": "org.fantasma.islands",
+        "License": "MIT",
+        "Name": "幻 Islands",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

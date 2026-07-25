@@ -1,0 +1,80 @@
+#!/bin/sh
+
+if [ "$1" = "sni" ]; then
+  svc="$2"; path="$3"; op="$4"; x="${5:-0}"; y="${6:-0}"
+  case "$op" in
+    menu)      method="ContextMenu" ;;
+    secondary) method="SecondaryActivate" ;;
+    *)         method="Activate" ;;
+  esac
+  busctl --user call "$svc" "$path" org.kde.StatusNotifierItem "$method" ii "$x" "$y" 2>/dev/null && exit 0
+  id=$(busctl --user get-property "$svc" "$path" org.kde.StatusNotifierItem Id 2>/dev/null | sed 's/^s "//; s/"$//')
+  base=$(echo "$id" | sed 's/[-_].*//' | tr '[:upper:]' '[:lower:]')
+  if [ -n "$base" ]; then
+    player=$(busctl --user list 2>/dev/null | awk -v b="$base" '$1 ~ /^org\.mpris\.MediaPlayer2\./ && tolower($1) ~ b {print $1; exit}')
+    if [ -n "$player" ]; then
+      busctl --user call "$player" /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2 Raise 2>/dev/null && exit 0
+    fi
+  fi
+  icon=$(busctl --user get-property "$svc" "$path" org.kde.StatusNotifierItem IconName 2>/dev/null | sed 's/^s "//; s/"$//; s/-symbolic$//')
+  [ -n "$icon" ] && command -v gtk-launch >/dev/null 2>&1 && gtk-launch "$icon" 2>/dev/null && exit 0
+  exit 1
+fi
+
+if [ "$1" = "weather" ]; then
+  wx=$(curl -sf --max-time 6 'https://wttr.in/?format=%c|%t' 2>/dev/null)
+  case "$wx" in
+    *"|"*) echo "WX $wx" ;;
+    *)     echo "WX" ;;
+  esac
+  exit 0
+fi
+
+state="${XDG_RUNTIME_DIR:-/tmp}/fantasma-islands.cpu"
+cur=$(awk '/^cpu /{idle=$5+$6; tot=0; for(i=2;i<=NF;i++)tot+=$i; print tot, idle}' /proc/stat)
+cpu=0
+if [ -r "$state" ]; then
+  prev=$(cat "$state")
+  set -- $prev; t1=$1; i1=$2
+  set -- $cur;  t2=$1; i2=$2
+  dt=$((t2 - t1)); di=$((i2 - i1))
+  [ "$dt" -gt 0 ] && cpu=$(( (100 * (dt - di)) / dt ))
+fi
+printf '%s\n' "$cur" > "$state"
+echo "CPU $cpu"
+
+free -b | awk '/^Mem:/{printf "RAM %d\n", 100*$3/$2}'
+
+v=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null)
+echo "$v" | awk '{printf "VOL %d\n", $2*100}'
+case "$v" in
+  *MUTED*) echo "MUTE 1" ;;
+  *)       echo "MUTE 0" ;;
+esac
+
+ssid=$(nmcli -t -f active,ssid dev wifi 2>/dev/null | awk -F: '$1=="yes"{print $2; exit}')
+if [ -n "$ssid" ]; then
+  echo "NET wifi|$ssid"
+elif nmcli -t -f TYPE,STATE device status 2>/dev/null | grep -q '^ethernet:connected'; then
+  echo "NET eth|LAN"
+else
+  echo "NET off|"
+fi
+
+btname=$(bluetoothctl devices Connected 2>/dev/null | head -1 | cut -d' ' -f3-)
+btpow=$(bluetoothctl show 2>/dev/null | awk '/Powered:/{print $2; exit}')
+if [ -n "$btname" ]; then
+  echo "BT on|$btname"
+elif [ "$btpow" = "yes" ]; then
+  echo "BT idle|"
+else
+  echo "BT off|"
+fi
+
+for b in /sys/class/power_supply/BAT*; do
+  if [ -r "$b/capacity" ]; then
+    echo "BAT $(cat "$b/capacity")"
+    echo "BATS $(cat "$b/status")"
+    break
+  fi
+done

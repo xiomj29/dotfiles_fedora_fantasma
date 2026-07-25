@@ -27,6 +27,8 @@ else
   kwriteconfig6 --file breezerc --group Common --key CornerRadius --delete 2>/dev/null || true
 fi
 
+plasma-apply-desktoptheme default >/dev/null 2>&1 || true
+
 echo "Revertido → esquema: $cs, accent: ${acc:-por defecto}, iconos: $ico."
 echo "Los widgets del escritorio, el wallpaper y la línea de ~/.zshrc quedan;"
 echo "bórralos a mano si quieres (widgets desde el escritorio; busca 'Fantasma' en ~/.zshrc)."

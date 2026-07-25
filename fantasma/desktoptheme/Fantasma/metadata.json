@@ -1,0 +1,12 @@
+{
+    "KPlugin": {
+        "Authors": [{ "Name": "Xio" }],
+        "Description": "Fondos de widget estilo islas — 幻 Fantasma",
+        "EnabledByDefault": true,
+        "Id": "Fantasma",
+        "License": "MIT",
+        "Name": "幻 Fantasma",
+        "Version": "1.0"
+    },
+    "X-Plasma-API": "5.0"
+}

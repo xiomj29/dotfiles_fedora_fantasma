@@ -17,8 +17,8 @@ WM_INACTIVE_BG="26,22,36"
 WM_INACTIVE_BLEND="32,24,42"
 WM_INACTIVE_FG="150,142,170"
 
-PLASMOIDS=(org.fantasma.vinyl org.fantasma.clock org.fantasma.frame org.fantasma.stats)
-GEO_VINYL="1088,64,400,176,0"
+PLASMOIDS=(org.fantasma.vinyl org.fantasma.clock org.fantasma.frame org.fantasma.stats org.fantasma.islands)
+GEO_VINYL="1088,88,400,176,0"
 GEO_CLOCK="0,495.938,672,368,0"
 GEO_FRAME="1088,288,400,224,0"
 GEO_STATS="1088,536,400,240,0"
@@ -137,9 +137,10 @@ kwriteconfig6 --file kdeglobals --group WM --key inactiveForeground "$WM_INACTIV
 kwriteconfig6 --file breezerc   --group Common --key CornerRadius 0
 ok "Barra de título violeta + CornerRadius=0"
 
-say "Instalando widgets (vinyl, clock, frame, stats)..."
+say "Instalando widgets (vinyl, clock, frame, stats, islands)..."
 mkdir -p ~/.local/bin
-install -m 755 "$RICE/widgets/bin/fantasma-stats" ~/.local/bin/fantasma-stats
+install -m 755 "$RICE/widgets/bin/fantasma-stats"   ~/.local/bin/fantasma-stats
+install -m 755 "$RICE/widgets/bin/fantasma-islands" ~/.local/bin/fantasma-islands
 for p in "${PLASMOIDS[@]}"; do
   src="$RICE/widgets/plasmoids/$p"
   [ -d "$src" ] || { warn "falta $p en el repo"; continue; }
@@ -172,6 +173,12 @@ fi
 say "Aplicando Fantasma al escritorio..."
 plasma-apply-lookandfeel -a org.fantasma.desktop >/dev/null 2>&1 \
   && ok "Tema Global Fantasma" || warn "No se pudo aplicar el Tema Global"
+
+mkdir -p ~/.local/share/plasma/desktoptheme
+cp -rT "$RICE/desktoptheme/Fantasma" ~/.local/share/plasma/desktoptheme/Fantasma
+plasma-apply-desktoptheme Fantasma >/dev/null 2>&1 \
+  && ok "Plasma Style Fantasma (fondo de widgets estilo isla)" \
+  || warn "No se pudo aplicar el Plasma Style Fantasma"
 kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key library org.kde.kwin.aurorae
 kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key theme __aurorae__svg__fantasma
 ok "Decoración Aurorae 2077"
@@ -222,10 +229,15 @@ ok "Dolphin ajustado"
 say "Colocando los widgets en el escritorio..."
 RES="$(kscreen-doctor -o 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | awk '/Geometry:/{print $NF; exit}')"
 [ -z "$RES" ] && RES="1536x864"
+SCREEN_W="${RES%x*}"
+GEO_ISLANDS="0,0,$((SCREEN_W-66)),64,0"
+GEO_NOTIF="$((SCREEN_W-50)),12,40,40,0"
 if [ -n "$QDBUS" ]; then
   JS='var d=desktops()[0];
-var want=["org.fantasma.vinyl","org.fantasma.clock","org.fantasma.frame","org.fantasma.stats"];
-var have={}; var ws=d.widgets();
+var ws=d.widgets();
+for(var i=0;i<ws.length;i++){ if(ws[i].type=="org.kde.plasma.systemtray"){ ws[i].remove(); } }
+var want=["org.fantasma.vinyl","org.fantasma.clock","org.fantasma.frame","org.fantasma.stats","org.fantasma.islands","org.kde.plasma.notifications"];
+var have={}; ws=d.widgets();
 for(var i=0;i<ws.length;i++){have[ws[i].type]=ws[i].id;}
 var ids=[]; var n=0;
 for(var j=0;j<want.length;j++){
@@ -236,8 +248,8 @@ print(d.id+"|"+ids.join(",")+"|"+n);'
   OUT="$("$QDBUS" org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "$JS" 2>/dev/null)"
   if [ -n "$OUT" ] && printf '%s' "$OUT" | grep -q '|'; then
     CONT="${OUT%%|*}"; rest="${OUT#*|}"; IDS="${rest%%|*}"; NADD="${rest##*|}"
-    IFS=',' read -r VID CID FID SID <<<"$IDS"
-    GEO="Applet-$VID:$GEO_VINYL;Applet-$CID:$GEO_CLOCK;Applet-$FID:$GEO_FRAME;Applet-$SID:$GEO_STATS;"
+    IFS=',' read -r VID CID FID SID IID NID <<<"$IDS"
+    GEO="Applet-$VID:$GEO_VINYL;Applet-$CID:$GEO_CLOCK;Applet-$FID:$GEO_FRAME;Applet-$SID:$GEO_STATS;Applet-$IID:$GEO_ISLANDS;Applet-$NID:$GEO_NOTIF;"
     APPLETSRC="$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc"
     kwriteconfig6 --file "$APPLETSRC" --group Containments --group "$CONT" --key "ItemGeometries-$RES"   "$GEO"
     kwriteconfig6 --file "$APPLETSRC" --group Containments --group "$CONT" --key "ItemGeometriesHorizontal" "$GEO"
@@ -254,73 +266,41 @@ else
   warn "qdbus no disponible: añade los widgets a mano desde «Añadir widgets»."
 fi
 
-say "Islas flotantes de la barra superior..."
+say "Islas 幻 de la barra superior (org.fantasma.islands)..."
 if [ -n "$QDBUS" ]; then
-  ISLAS_JS='
-var ps = panels();
-for (var i = ps.length - 1; i >= 0; i--) {
-  if (ps[i].location == "top") { ps[i].remove(); }
-}
-function isla(alignment, offset) {
-  var p = new Panel;
-  p.location = "top";
-  p.height = 38;
-  p.floating = true;
-  p.alignment = alignment;
-  p.offset = offset;
-  p.hiding = "dodgewindows";
-  p.opacity = "translucent";
-  return p;
-}
-var pL = isla("left", 12);
-pL.addWidget("luisbocanegra.intel.gpu.monitor");
-var cpu = pL.addWidget("org.kde.plasma.systemmonitor.cpu");
-cpu.currentConfigGroup = ["Appearance"];
-cpu.writeConfig("chartFace", "org.kde.ksysguard.piechart");
-cpu.writeConfig("title", "CPU");
-cpu.currentConfigGroup = ["Sensors"];
-cpu.writeConfig("highPrioritySensorIds", "[\"cpu/all/usage\"]");
-cpu.writeConfig("totalSensors", "[\"cpu/all/usage\"]");
-cpu.currentConfigGroup = ["SensorColors"];
-cpu.writeConfig("cpu/all/usage", "255,127,184");
-var ram = pL.addWidget("org.kde.plasma.systemmonitor.memory");
-ram.currentConfigGroup = ["Appearance"];
-ram.writeConfig("chartFace", "org.kde.ksysguard.piechart");
-ram.writeConfig("title", "RAM");
-ram.currentConfigGroup = ["Sensors"];
-ram.writeConfig("highPrioritySensorIds", "[\"memory/physical/used\"]");
-ram.writeConfig("totalSensors", "[\"memory/physical/usedPercent\"]");
-ram.currentConfigGroup = ["SensorColors"];
-ram.writeConfig("memory/physical/used", "200,143,240");
-var net = pL.addWidget("org.kde.plasma.systemmonitor.net");
-net.currentConfigGroup = ["Appearance"];
-net.writeConfig("chartFace", "org.kde.ksysguard.linechart");
-net.writeConfig("title", "NET");
-net.currentConfigGroup = ["SensorColors"];
-net.writeConfig("network/all/download", "58,214,230");
-net.writeConfig("network/all/upload", "255,216,138");
-pL.lengthMode = "fit";
-var pC = isla("center", 0);
-pC.addWidget("org.kde.plasma.digitalclock");
-pC.addWidget("org.kde.plasma.notifications");
-pC.addWidget("org.kde.plasma.colorpicker");
-pC.lengthMode = "fit";
-pC.maximumLength = 560;
-var pR = isla("right", 12);
-pR.addWidget("org.kde.plasma.brightness");
-pR.addWidget("org.kde.plasma.nightcolorcontrol");
-pR.addWidget("org.kde.plasma.networkmanagement");
-pR.addWidget("org.kde.plasma.bluetooth");
-pR.addWidget("org.kde.plasma.clipboard");
-pR.addWidget("org.kde.plasma.battery");
-pR.addWidget("org.kde.plasma.lock_logout");
-pR.lengthMode = "fit";'
-  "$QDBUS" org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "$ISLAS_JS" >/dev/null 2>&1 \
-    && ok "Tres islas en la barra superior (telemetría / tiempo+media / control)" \
-    || warn "No se pudieron crear las islas del panel superior"
+  "$QDBUS" org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \
+    'var ps = panels(); for (var i = ps.length - 1; i >= 0; i--) { if (ps[i].location == "top") ps[i].remove(); }' >/dev/null 2>&1 \
+    && ok "Paneles superiores antiguos eliminados" \
+    || warn "No se pudieron quitar los paneles superiores antiguos"
 else
-  warn "qdbus no disponible: no se crearon las islas del panel superior"
+  warn "qdbus no disponible: quita los paneles superiores a mano"
 fi
+
+say "Escritorios virtuales (5, numerados en kanji)..."
+kwriteconfig6 --file kwinrc --group Desktops --key Rows 1
+if [ -n "$QDBUS" ]; then
+  KANJI=(一 二 三 四 五)
+  CUR=$("$QDBUS" org.kde.KWin /VirtualDesktopManager org.kde.KWin.VirtualDesktopManager.count 2>/dev/null || echo 1)
+  while [ "${CUR:-1}" -lt 5 ]; do
+    "$QDBUS" org.kde.KWin /VirtualDesktopManager org.kde.KWin.VirtualDesktopManager.createDesktop "$CUR" "${KANJI[$CUR]}" >/dev/null 2>&1 || break
+    CUR=$((CUR+1))
+  done
+  for n in 1 2 3 4 5; do
+    ID=$(kreadconfig6 --file kwinrc --group Desktops --key "Id_$n")
+    [ -n "$ID" ] && "$QDBUS" org.kde.KWin /VirtualDesktopManager org.kde.KWin.VirtualDesktopManager.setDesktopName "$ID" "${KANJI[$((n-1))]}" >/dev/null 2>&1
+  done
+  ok "5 escritorios: 一 二 三 四 五"
+else
+  warn "qdbus no disponible: crea los 5 escritorios en Preferencias del sistema"
+fi
+
+say "Atajos de mosaico (cuartos de pantalla)..."
+kwriteconfig6 --file kglobalshortcutsrc --group kwin --key "Window Quick Tile Top Left"     "Meta+U,none,Quick Tile Window to the Top Left"
+kwriteconfig6 --file kglobalshortcutsrc --group kwin --key "Window Quick Tile Top Right"    "Meta+I,none,Quick Tile Window to the Top Right"
+kwriteconfig6 --file kglobalshortcutsrc --group kwin --key "Window Quick Tile Bottom Left"  "Meta+J,none,Quick Tile Window to the Bottom Left"
+kwriteconfig6 --file kglobalshortcutsrc --group kwin --key "Window Quick Tile Bottom Right" "Meta+K,none,Quick Tile Window to the Bottom Right"
+systemctl --user restart plasma-kglobalaccel.service 2>/dev/null || true
+ok "Cuartos: Meta+U/I/J/K · mitades: Meta+flechas · maximizar: Meta+PgUp"
 
 [ -n "$QDBUS" ] && "$QDBUS" org.kde.KWin /KWin org.kde.KWin.reconfigure >/dev/null 2>&1 || true
 
